@@ -1,0 +1,21 @@
+type Error = variant { NotFound : record { msg : text } };
+type FoodItem = record {
+  id : nat64;
+  name : text;
+  quantity : nat32;
+  expiration_date : nat64;
+  created_date : nat64;
+};
+type FoodItemPayload = record { name : text; quantity : nat32 };
+type Result = variant { Ok : text; Err : Error };
+type Result_1 = variant { Ok : FoodItem; Err : Error };
+service : {
+  add_food_item : (FoodItemPayload) -> (opt FoodItem);
+  check_expiration_status : (nat64) -> (Result) query;
+  delete_food_item : (nat64) -> (Result_1);
+  get_food_item : (nat64) -> (Result_1) query;
+  get_total_food_quantity : () -> (nat32) query;
+  list_all_food_items : () -> (vec FoodItem) query;
+  search_food_items_by_name : (text) -> (vec FoodItem) query;
+  update_food_item : (nat64, FoodItemPayload) -> (Result_1);
+}
