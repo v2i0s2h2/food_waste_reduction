@@ -43,8 +43,6 @@ impl BoundedStorable for FoodItem {
 
 // ... (existing thread-local variables and payload structure)
 
-// New thread-local variables for our Food Waste Reduction App
-
 thread_local! {
     static FOOD_MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> = RefCell::new(
         MemoryManager::init(DefaultMemoryImpl::default())
@@ -72,12 +70,11 @@ struct ExcessFoodSharePayload {
     quantity: u32,
 }
 
-// ... (existing imports and types)
 
-// 2.7 Managing Food Items
+// Managing Food Items
 // In this section, we'll implement the core logic for managing food items within our canister.
 
-// 2.7.1 get_food_item Function:
+// get_food_item Function:
 #[ic_cdk::query]
 fn get_food_item(id: u64) -> Result<FoodItem, Error> {
     match _get_food_item(&id) {
@@ -88,12 +85,12 @@ fn get_food_item(id: u64) -> Result<FoodItem, Error> {
     }
 }
 
-// 2.7.2 _get_food_item Function:
+// _get_food_item Function:
 fn _get_food_item(id: &u64) -> Option<FoodItem> {
     FOOD_STORAGE.with(|s| s.borrow().get(id))
 }
 
-// 2.7.3 add_food_item Function:
+// add_food_item Function:
 #[ic_cdk::update]
 fn add_food_item(item: FoodItemPayload) -> Option<FoodItem> {
     let id = FOOD_ID_COUNTER
@@ -113,7 +110,7 @@ fn add_food_item(item: FoodItemPayload) -> Option<FoodItem> {
     Some(food_item)
 }
 
-// 2.7.4 update_food_item Function:
+// update_food_item Function:
 #[ic_cdk::update]
 fn update_food_item(id: u64, item: FoodItemPayload) -> Result<FoodItem, Error> {
     match FOOD_STORAGE.with(|service| service.borrow().get(&id)) {
@@ -131,7 +128,7 @@ fn update_food_item(id: u64, item: FoodItemPayload) -> Result<FoodItem, Error> {
     }
 }
 
-// 2.7.5 delete_food_item Function:
+// delete_food_item Function:
 #[ic_cdk::update]
 fn delete_food_item(id: u64) -> Result<FoodItem, Error> {
     match FOOD_STORAGE.with(|service| service.borrow_mut().remove(&id)) {
@@ -145,7 +142,7 @@ fn delete_food_item(id: u64) -> Result<FoodItem, Error> {
     }
 }
 
-// 2.7.6 enum Error:
+// enum Error:
 #[derive(candid::CandidType, Deserialize, Serialize)]
 enum Error {
     NotFound { msg: String },
@@ -168,7 +165,7 @@ fn check_expiration_status(id: u64) -> Result<String, Error> {
     }
 }
 
-// 1. List All Food Items
+// List All Food Items
 #[ic_cdk::query]
 fn list_all_food_items() -> Vec<FoodItem> {
     FOOD_STORAGE.with(|service| {
@@ -177,7 +174,7 @@ fn list_all_food_items() -> Vec<FoodItem> {
     })
 }
 
-// 3. Search Food Items by Name
+// Search Food Items by Name
 #[ic_cdk::query]
 fn search_food_items_by_name(name: String) -> Vec<FoodItem> {
     FOOD_STORAGE.with(|service| {
@@ -190,7 +187,7 @@ fn search_food_items_by_name(name: String) -> Vec<FoodItem> {
     })
 }
 
-// 4. Get Total Quantity of All Food Items
+// Get Total Quantity of All Food Items
 #[ic_cdk::query]
 fn get_total_food_quantity() -> u32 {
     FOOD_STORAGE.with(|service| {
