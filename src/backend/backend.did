@@ -12,8 +12,12 @@ type Result_1 = variant { Ok : FoodItem; Err : Error };
 service : {
   add_food_item : (FoodItemPayload) -> (opt FoodItem);
   check_expiration_status : (nat64) -> (Result) query;
+  clear_expired_food_items : () -> ();
   delete_food_item : (nat64) -> (Result_1);
+  get_average_food_quantity : () -> (float64) query;
   get_food_item : (nat64) -> (Result_1) query;
+  get_food_items_above_quantity : (nat32) -> (vec FoodItem) query;
+  get_food_items_below_quantity : (nat32) -> (vec FoodItem) query;
   get_total_food_quantity : () -> (nat32) query;
   list_all_food_items : () -> (vec FoodItem) query;
   search_food_items_by_name : (text) -> (vec FoodItem) query;
