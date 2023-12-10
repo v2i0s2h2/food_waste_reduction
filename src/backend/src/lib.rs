@@ -10,6 +10,12 @@ type Memory = VirtualMemory<DefaultMemoryImpl>;
 type IdCell = Cell<u64, Memory>;
 // ... (existing imports and types)
 
+use ic_cdk::api::time;
+
+// Constants
+const ONE_DAY_IN_MICROSECONDS: u64 = 86_400_000_000_000;
+
+
 #[derive(candid::CandidType, Clone, Serialize, Deserialize, Default)]
 struct FoodItem {
     id: u64,
@@ -92,35 +98,36 @@ fn _get_food_item(id: &u64) -> Option<FoodItem> {
 
 // add_food_item Function:
 #[ic_cdk::update]
-fn add_food_item(item: FoodItemPayload) -> Option<FoodItem> {
+fn add_food_item(item: FoodItemPayload) -> Result<FoodItem, Error> {
     let id = FOOD_ID_COUNTER
         .with(|counter| {
-            let current_value = *counter.borrow().get();
+            let current_value = counter.borrow().get();
             counter.borrow_mut().set(current_value + 1)
         })
-        .expect("cannot increment id counter for food items");
+        .map_err(|_| Error::CounterIncrementError)?;
+
     let food_item = FoodItem {
         id,
         name: item.name,
         quantity: item.quantity,
         created_date: time(),
-        expiration_date: time() + 86_400_000_000_000,
+        expiration_date: time() + ONE_DAY_IN_MICROSECONDS,
     };
     do_insert_food_item(&food_item);
-    Some(food_item)
+    Ok(food_item)
 }
 
 // update_food_item Function:
 #[ic_cdk::update]
 fn update_food_item(id: u64, item: FoodItemPayload) -> Result<FoodItem, Error> {
-    match FOOD_STORAGE.with(|service| service.borrow().get(&id)) {
-        Some(mut food_item) => {
+    match FOOD_STORAGE.with(|service| service.borrow_mut().get_mut(&id)) {
+        Some(food_item) => {
             food_item.name = item.name;
             food_item.quantity = item.quantity;
             food_item.created_date = time();
-            food_item.expiration_date;
-            do_insert_food_item(&food_item);
-            Ok(food_item)
+            food_item.expiration_date = time() + ONE_DAY_IN_MICROSECONDS;
+            do_insert_food_item(food_item);
+            Ok(food_item.clone())
         }
         None => Err(Error::NotFound {
             msg: format!("couldn't update a food item with id={}. item not found", id),
@@ -146,7 +153,9 @@ fn delete_food_item(id: u64) -> Result<FoodItem, Error> {
 #[derive(candid::CandidType, Deserialize, Serialize)]
 enum Error {
     NotFound { msg: String },
+    CounterIncrementError,
 }
+
 
 #[ic_cdk::query]
 fn check_expiration_status(id: u64) -> Result<String, Error> {
